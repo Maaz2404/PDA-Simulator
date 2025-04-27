@@ -240,6 +240,8 @@ int main() {
     setupAutomaton(&automaton);
 
     char word[100];
+    printf("Welcome to the PDA Simulator for Balanced Parentheses!\n");
+    printf("This PDA accepts strings of balanced parentheses.\n");
     printf("Enter the string of parentheses: ");
     scanf("%s", word);
 
