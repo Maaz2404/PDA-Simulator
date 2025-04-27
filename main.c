@@ -113,7 +113,7 @@ void printRemainingInput(char *word, int position) {
 // Setup automaton for balanced parentheses
 void setupAutomaton(Automaton *automaton) {
     automaton->initialState = 0;
-    automaton->finalStates[0] = 0;
+    automaton->finalStates[0] = 1;  // Changed: State 1 is now the final state
     automaton->finalStateCount = 1;
 
     // State 0 transitions
@@ -128,6 +128,10 @@ void setupAutomaton(Automaton *automaton) {
     // ) read, pop ( -> push nothing (matching closing parenthesis)
     automaton->states[0].transitions[automaton->states[0].transitionCount++] = 
         (Transition){')', '(', "", 0};
+    
+    // Add epsilon transition from state 0 to state 1 when Z is on top of stack
+    automaton->states[0].transitions[automaton->states[0].transitionCount++] = 
+        (Transition){'\0', 'Z', "Z", 1};  // Added: Epsilon transition to final state
 }
 
 int processWord(Automaton *automaton, char *word) {
@@ -218,6 +222,28 @@ int processWord(Automaton *automaton, char *word) {
         printSeparator();
         delay(DELAY_SECONDS);  // Using our portable delay function
     }
+    
+    // Add epsilon transition check after processing all input
+    if (i == wordLen && currentState == 0 && peek(&stack) == 'Z') {
+        printf("STEP %d: EPSILON TRANSITION\n", stepCount++);
+        printf("All input processed. Taking epsilon transition to final state.\n");
+        printf("Applying Transition: Delta(q%d, ε, Z) -> (q1, Z)\n", currentState);
+        
+        // This transition keeps Z on the stack
+        printf("Action: Pop 'Z' from stack\n");
+        pop(&stack);
+        printf("Action: Push 'Z' onto stack\n");
+        push(&stack, 'Z');
+        
+        currentState = 1;  // Move to final state
+        
+        printf("\nSTEP %d: AFTER EPSILON TRANSITION\n", stepCount++);
+        printf("Current State: q%d (Final State)\n", currentState);
+        printRemainingInput(word, i);
+        printStack(&stack);
+        printSeparator();
+        delay(DELAY_SECONDS);
+    }
 
     printf("\n====== PDA SIMULATION END ======\n");
     
@@ -228,7 +254,7 @@ int processWord(Automaton *automaton, char *word) {
            currentState, isFinalState(automaton, currentState) ? "(Final)" : "(Not Final)");
     printf("Final Stack: ");
     printStack(&stack);
-    printf("Acceptance Criteria: Final state (q0) + only 'Z' on stack\n");
+    printf("Acceptance Criteria: Final state (q1) + only 'Z' on stack\n");
     printf("Result: The word '%s' is %s by the automaton.\n",
            word, result ? "ACCEPTED" : "REJECTED");
     
