@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>  // For portable delay function
+#include <time.h>  // Delay Function
 
 #define MAX_TRANSITIONS 100
 #define MAX_STACK_SIZE 100
 #define MAX_SYMBOL_LENGTH 10
-#define DELAY_SECONDS 1 // Delay between steps in seconds
+#define DELAY_SECONDS 1 // Delay of 1 second
 
 typedef struct {
     char readSymbol;
@@ -35,8 +35,7 @@ typedef struct {
 // Portable delay function using time.h (works in both Windows and Linux)
 void delay(int seconds) {
     clock_t start_time = clock();
-    while (clock() < start_time + seconds * CLOCKS_PER_SEC)
-        ;  // Empty loop to create delay
+    while (clock() < start_time + seconds * CLOCKS_PER_SEC);  
 }
 
 // Stack functions
@@ -220,10 +219,9 @@ int processWord(Automaton *automaton, char *word) {
         printStack(&stack);
         
         printSeparator();
-        delay(DELAY_SECONDS);  // Using our portable delay function
+        delay(DELAY_SECONDS);  
     }
     
-    // Add epsilon transition check after processing all input
     if (i == wordLen && currentState == 0 && peek(&stack) == 'Z') {
         printf("STEP %d: EPSILON TRANSITION\n", stepCount++);
         printf("All input processed. Taking epsilon transition to final state.\n");
@@ -267,7 +265,6 @@ int main() {
 
     char word[100];
     printf("Welcome to the PDA Simulator for Balanced Parentheses!\n");
-    printf("This PDA accepts strings of balanced parentheses.\n");
     printf("Enter the string of parentheses: ");
     scanf("%s", word);
 
