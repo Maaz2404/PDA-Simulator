@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>  // For portable delay function
 
 #define MAX_TRANSITIONS 100
 #define MAX_STACK_SIZE 100
 #define MAX_SYMBOL_LENGTH 10
+#define DELAY_SECONDS 1 // Delay between steps in seconds
 
 typedef struct {
     char readSymbol;
@@ -29,6 +31,13 @@ typedef struct {
     char items[MAX_STACK_SIZE];
     int top;
 } Stack;
+
+// Portable delay function using time.h (works in both Windows and Linux)
+void delay(int seconds) {
+    clock_t start_time = clock();
+    while (clock() < start_time + seconds * CLOCKS_PER_SEC)
+        ;  // Empty loop to create delay
+}
 
 // Stack functions
 void initStack(Stack *stack) {
@@ -59,13 +68,21 @@ char peek(Stack *stack) {
     return '\0';
 }
 
-// Print stack from top to bottom
+// Print a separator line for better readability
+void printSeparator() {
+    printf("--------------------------------------------------------\n");
+}
+
+// Print stack contents with better formatting
 void printStack(Stack *stack) {
-    printf("Stack (top -> bottom): ");
+    printf("Stack: [");
     for (int i = stack->top; i >= 0; i--) {
-        printf("%c ", stack->items[i]);
+        printf("%c", stack->items[i]);
+        if (i > 0) {
+            printf(", ");
+        }
     }
-    printf("\n");
+    printf("] (top is leftmost)\n");
 }
 
 // Check if a state is final
@@ -78,7 +95,22 @@ int isFinalState(Automaton *automaton, int state) {
     return 0;
 }
 
-// Simplified automaton for balanced parentheses
+// Print the remaining input with a cursor showing current position
+void printRemainingInput(char *word, int position) {
+    printf("Input: ");
+    for (int i = 0; i < strlen(word); i++) {
+        if (i == position) {
+            printf("[%c]", word[i]); // Highlight current symbol
+        } else if (i < position) {
+            printf(" "); // Space for processed symbols
+        } else {
+            printf("%c", word[i]);
+        }
+    }
+    printf("\n");
+}
+
+// Setup automaton for balanced parentheses
 void setupAutomaton(Automaton *automaton) {
     automaton->initialState = 0;
     automaton->finalStates[0] = 0;
@@ -106,36 +138,63 @@ int processWord(Automaton *automaton, char *word) {
     int currentState = automaton->initialState;
     int i = 0;
     int wordLen = strlen(word);
+    int stepCount = 0;
 
-    printf("\n--- PDA Simulation Start ---\n");
+    printf("\n====== PDA SIMULATION START ======\n");
+    printSeparator();
+    
+    // Print initial configuration
+    printf("STEP %d: INITIAL CONFIGURATION\n", stepCount++);
+    printf("Current State: q%d\n", currentState);
+    printRemainingInput(word, i);
+    printStack(&stack);
+    printSeparator();
+    delay(DELAY_SECONDS);  // Using our portable delay function
 
     while (i < wordLen) {
         char currentSymbol = word[i];
         char topSymbol = peek(&stack);
 
-        printf("Current Input Symbol: '%c' | Top of Stack: '%c'\n", currentSymbol, topSymbol);
+        printf("STEP %d: PROCESSING\n", stepCount++);
+        printf("Current State: q%d\n", currentState);
+        printf("Current Input Symbol: '%c'\n", currentSymbol);
+        printf("Top of Stack: '%c'\n", topSymbol);
+        printRemainingInput(word, i);
         printStack(&stack);
-
+        
         int transitionFound = 0;
 
         for (int j = 0; j < automaton->states[currentState].transitionCount; j++) {
             Transition t = automaton->states[currentState].transitions[j];
             
             if (t.readSymbol == currentSymbol && t.popSymbol == topSymbol) {
-                printf("Transition: (%d, %c, %c) -> (", currentState, t.readSymbol, t.popSymbol);
+                // Print transition details
+                printf("\nApplying Transition: Delta(q%d, %c, %c) -> (q%d, ", 
+                      currentState, t.readSymbol, t.popSymbol, t.toState);
+                
+                if (strlen(t.pushSymbol) == 0) {
+                    printf("E");  
+                } else {
+                    printf("%s", t.pushSymbol);
+                }
+                printf(")\n");
                 
                 // Pop symbol from stack
-                pop(&stack);
+                printf("Action: Pop '%c' from stack\n", pop(&stack));
                 
                 // Push symbols onto stack (in reverse order)
-                for (int k = strlen(t.pushSymbol) - 1; k >= 0; k--) {
-                    if (t.pushSymbol[k] != 'E') {
-                        push(&stack, t.pushSymbol[k]);
+                if (strlen(t.pushSymbol) > 0) {
+                    printf("Action: Push '");
+                    for (int k = strlen(t.pushSymbol) - 1; k >= 0; k--) {
                         printf("%c", t.pushSymbol[k]);
+                        push(&stack, t.pushSymbol[k]);
                     }
+                    printf("' onto stack\n");
+                } else {
+                    printf("Action: Push nothing onto stack\n");
                 }
-                printf(", %d)\n", t.toState);
                 
+                printf("Moving to state q%d\n", t.toState);
                 currentState = t.toState;
                 transitionFound = 1;
                 i++; // Move to next input symbol
@@ -144,19 +203,34 @@ int processWord(Automaton *automaton, char *word) {
         }
 
         if (!transitionFound) {
-            printf("No valid transition from state %d with input '%c' and stack top '%c'\n", 
+            printf("\nERROR: No valid transition from state q%d with input '%c' and stack top '%c'\n", 
                    currentState, currentSymbol, topSymbol);
+            printSeparator();
             return 0;
         }
+        
+        // Print updated configuration after transition
+        printf("\nSTEP %d: AFTER TRANSITION\n", stepCount++);
+        printf("Current State: q%d\n", currentState);
+        printRemainingInput(word, i);
+        printStack(&stack);
+        
+        printSeparator();
+        delay(DELAY_SECONDS);  // Using our portable delay function
     }
 
-    printf("--- PDA Simulation End ---\n");
+    printf("\n====== PDA SIMULATION END ======\n");
     
     // Check if we reached a final state and the stack contains only Z
     int result = (isFinalState(automaton, currentState) && stack.top == 0 && peek(&stack) == 'Z');
     
-    printf("Final state: %d (is final: %d ), Stack top: %c, Stack size: %d\n", 
-           currentState, isFinalState(automaton, currentState), peek(&stack), stack.top + 1);
+    printf("Final State: q%d %s\n", 
+           currentState, isFinalState(automaton, currentState) ? "(Final)" : "(Not Final)");
+    printf("Final Stack: ");
+    printStack(&stack);
+    printf("Acceptance Criteria: Final state (q0) + only 'Z' on stack\n");
+    printf("Result: The word '%s' is %s by the automaton.\n",
+           word, result ? "ACCEPTED" : "REJECTED");
     
     return result;
 }
@@ -170,9 +244,6 @@ int main() {
     scanf("%s", word);
 
     int result = processWord(&automaton, word);
-
-    printf("\nResult: The word '%s' is %s by the automaton.\n",
-           word, result ? "ACCEPTED ?" : "REJECTED ?");
 
     return 0;
 }
