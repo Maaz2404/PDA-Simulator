@@ -264,7 +264,7 @@ int main() {
 
     char word[100];
     printf("Welcome to the PDA Simulator for Balanced Parentheses!\n");
-    printf("Enter the string of parentheses{ (, ) }:");
+    printf("Enter the string of parentheses{ ( , ) }:");
     scanf("%s", word);
 
     int result = processWord(&automaton, word);
