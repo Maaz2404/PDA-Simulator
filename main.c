@@ -171,7 +171,6 @@ int processWord(Automaton *automaton, char *word) {
             Transition t = automaton->states[currentState].transitions[j];
             
             if (t.readSymbol == currentSymbol && t.popSymbol == topSymbol) {
-                // Print transition details
                 printf("\nApplying Transition: Delta(q%d, %c, %c) -> (q%d, ", 
                       currentState, t.readSymbol, t.popSymbol, t.toState);
                 
@@ -182,10 +181,10 @@ int processWord(Automaton *automaton, char *word) {
                 }
                 printf(")\n");
                 
-                // Pop symbol from stack
+                
                 printf("Action: Pop '%c' from stack\n", pop(&stack));
                 
-                // Push symbols onto stack (in reverse order)
+                
                 if (strlen(t.pushSymbol) > 0) {
                     printf("Action: Push '");
                     for (int k = strlen(t.pushSymbol) - 1; k >= 0; k--) {
@@ -212,7 +211,7 @@ int processWord(Automaton *automaton, char *word) {
             return 0;
         }
         
-        // Print updated configuration after transition
+        
         printf("\nSTEP %d: AFTER TRANSITION\n", stepCount++);
         printf("Current State: q%d\n", currentState);
         printRemainingInput(word, i);
@@ -265,7 +264,7 @@ int main() {
 
     char word[100];
     printf("Welcome to the PDA Simulator for Balanced Parentheses!\n");
-    printf("Enter the string of parentheses: ");
+    printf("Enter the string of parentheses{ (, ) }:");
     scanf("%s", word);
 
     int result = processWord(&automaton, word);
