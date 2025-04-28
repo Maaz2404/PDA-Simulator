@@ -206,7 +206,7 @@ int processWord(Automaton *automaton, char *word) {
         }
 
         if (!transitionFound) {
-            printf("\nERROR: No valid transition from state q%d with input '%c' and stack top '%c'\n", 
+            printf("\nREJECTED: No valid transition from state q%d with input '%c' and stack top '%c'\n", 
                    currentState, currentSymbol, topSymbol);
             printSeparator();
             return 0;
